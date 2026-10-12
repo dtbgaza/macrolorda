@@ -1,0 +1,81 @@
+repeat task.wait() until game:IsLoaded()
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local Player = Players.LocalPlayer
+
+local Speed = 100
+local Multiplier = 270.22
+local SpeedEnabled = false
+local MovementEnabled = false
+
+local function getCharacter()
+    local Character = Player.Character
+    if not Character then return end
+
+    local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+    local Root = Character:FindFirstChild("HumanoidRootPart")
+
+    if not Humanoid or not Root then return end
+    return Character, Humanoid, Root
+end
+
+local function applySpeed()
+    local _, Humanoid = getCharacter()
+    if Humanoid then
+        Humanoid.WalkSpeed = SpeedEnabled and Speed or 16
+    end
+end
+
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+
+    if input.KeyCode == Enum.KeyCode.T then
+        SpeedEnabled = not SpeedEnabled
+        applySpeed()
+        print("Speed " .. (SpeedEnabled and "ON" or "OFF"))
+
+    elseif input.KeyCode == Enum.KeyCode.M then
+        Speed += 5
+        applySpeed()
+        print("Speed:", Speed)
+
+    elseif input.KeyCode == Enum.KeyCode.N then
+        Speed = math.max(0, Speed - 5)
+        applySpeed()
+        print("Speed:", Speed)
+
+    elseif input.KeyCode == Enum.KeyCode.LeftBracket then
+        Multiplier += 30.01
+        print("Multiplier:", Multiplier)
+
+    elseif input.KeyCode == Enum.KeyCode.RightBracket then
+        Multiplier = math.max(0, Multiplier - 30.01)
+        print("Multiplier:", Multiplier)
+
+    elseif input.KeyCode == Enum.KeyCode.P then
+        MovementEnabled = not MovementEnabled
+        print("Movement " .. (MovementEnabled and "ON" or "OFF"))
+    end
+end)
+
+RunService.Heartbeat:Connect(function(dt)
+    if not MovementEnabled then return end
+
+    local _, Humanoid, Root = getCharacter()
+    if not Humanoid or not Root then return end
+
+    local direction = Humanoid.MoveDirection
+    if direction.Magnitude > 0 then
+        Root.CFrame += direction * Multiplier * dt
+    end
+end)
+
+Player.CharacterAdded:Connect(function()
+    task.wait(0.5)
+    applySpeed()
+end)
+
+print("Loaded: T toggle | M/N speed | [/] multiplier | P movement")
